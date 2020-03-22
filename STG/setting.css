@@ -1,0 +1,20 @@
+div.center{
+  margin : 20px auto;
+  width : 750px;
+  height :900px;
+}
+
+canvas{
+  position: absolute;
+}
+
+canvas#glcanvas{
+  width: 750px;
+  height: 900px;
+}
+canvas#text{
+  width: 600px;
+  height: 300px;
+  top: 300px;
+  left: 75px;
+}
