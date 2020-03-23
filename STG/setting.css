@@ -3,18 +3,24 @@ div.center{
   width : 750px;
   height :900px;
 }
-
-canvas{
-  position: absolute;
+div.canvas-wrapper{
+  width : 750px;
+  height :900px;
+  position: relative;
 }
+div.text-content{
+  position: absolute;
+  left: 0px;
+	top: 0px;
+  width : 750px;
+  height :900px;
+  color: red;
+  font-size: 100px;
+  text-align: center;
+}
+
 
 canvas#glcanvas{
   width: 750px;
   height: 900px;
-}
-canvas#text{
-  width: 600px;
-  height: 300px;
-  top: 300px;
-  left: 75px;
 }

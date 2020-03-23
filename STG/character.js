@@ -40,7 +40,7 @@ class Witch{
 
   generateBullets(gl,now,globalBullets){
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    if(now - this.timer > 2.0){
+    if(now - this.timer > 1.0){
       this.timer = now;
       const r = 0.2;
       const num = 32;

@@ -1,80 +1,3 @@
-const pi = Math.PI;
-
-function main(){
-	let gl = initCanvas();
-	const vsSource = vsCode();
-	const vsSource2 = vsCode2();
-	const fsSource = fsCode();
-	const bulletShaderProgram = initShaderProgram(gl,vsSource,fsSource);
-	const meShaderProgram = initShaderProgram(gl,vsSource2,fsSource);
-	const programInfo = {
-		bulletProgram: bulletShaderProgram,
-		attribLocationsB: {
-			vertexPosition : gl.getAttribLocation(bulletShaderProgram,"aVertexPosition"),
-			vertexColor: gl.getAttribLocation(bulletShaderProgram,"aVertexColor"),
-		},
-		uniformLocationsB: {
-			modelViewMatrix : gl.getUniformLocation(bulletShaderProgram,"uModelViewMatrix"),
-			elasped: gl.getUniformLocation(bulletShaderProgram,"uElasped"),
-			start: gl.getUniformLocation(bulletShaderProgram,"uStart"),
-			time: gl.getUniformLocation(bulletShaderProgram,"uTime"),
-			x0: gl.getUniformLocation(bulletShaderProgram,"uX0"),
-			v1: gl.getUniformLocation(bulletShaderProgram,"uV1"),
-			a1: gl.getUniformLocation(bulletShaderProgram,"uA1"),
-			vStopRot: gl.getUniformLocation(bulletShaderProgram,"uVStopRot"),
-			v2: gl.getUniformLocation(bulletShaderProgram,"uV2"),
-			a2: gl.getUniformLocation(bulletShaderProgram,"uA2"),
-		},
-		meProgram: meShaderProgram,
-		attribLocationsM: {
-			vertexPosition : gl.getAttribLocation(meShaderProgram,"aVertexPosition"),
-			vertexColor: gl.getAttribLocation(meShaderProgram,"aVertexColor"),
-		},
-		uniformLocationsM: {
-			modelViewMatrix: gl.getUniformLocation(meShaderProgram,"uModelViewMatrix"),
-			parallelMatrix: gl.getUniformLocation(meShaderProgram,"uParallelMatrix"),
-		},
-	};
-
-	const triangle = getTriangle();
-	const rect = getRectangle();
-	const triangleBuffers = initPrimitiveBuffers(gl,triangle);
-	const rectangleBuffers = initPrimitiveBuffers(gl,rect);
-	let primitivesBuffers = [rectangleBuffers,triangleBuffers];
-	let primitivesData = [rect,triangle];
-
-	const move0 = moveConstantVelocity(0.5,[0.25,0]);
-	const move1 = moveConstantAcceleration(0.8,[0.0,0.0],[0.15,0]);
-	let moves = [move1,move0];
-
-	let bullets = [[],[]];
-
-	let timerGC = 0.0;
-	let then = 0.0;
-
-	let me = new Me(gl,0.0,-0.4,0.6);
-	let inputs = new Inputs();
-	addUIEvent(me,inputs);
-	let witch = new Witch(0.0,0.5,then);
-
-	function render(now){
-		now *= 0.001;
-		then = now;
-
-		witch.generateBullets(gl,now,bullets);
-
-		inputs.update(me);
-
-		if(now - timerGC > 1.0){
-			bulletsGC(bullets,now);
-			timerGC = now;
-		}
-		drawScene(gl,programInfo,primitivesData,primitivesBuffers,moves,bullets,me,now);
-		requestAnimationFrame(render);
-	}
-
-	requestAnimationFrame(render);
-}
 
 // TODO 処理が重いようならQueueを使うなりして削除のコストを下げるべし
 function bulletsGC(bullets,now){
@@ -158,7 +81,7 @@ function setUniformBullet(gl,programInfo,bullet){
 	gl.uniform4fv(programInfo.uniformLocationsB.x0,bullet.x0);
 }
 
-function drawScene(gl,programInfo,primitivesData,primitivesBuffers,moves,bullets,me,elasped){
+function drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bullets,me,elasped){
 	gl.clearColor(0.0,0.0,0.0,1.0);
   gl.clearDepth(1.0);
   gl.enable(gl.DEPTH_TEST);
@@ -166,7 +89,7 @@ function drawScene(gl,programInfo,primitivesData,primitivesBuffers,moves,bullets
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// draw bullets
-	let modelViewMatrix = getModelViewMatrix(gl);
+
 	gl.useProgram(programInfo.bulletProgram);
 	setUniformModelViewMatrix(gl,modelViewMatrix,programInfo.uniformLocationsB);
 	gl.uniform1f(programInfo.uniformLocationsB.elasped,elasped);
@@ -186,9 +109,6 @@ function drawScene(gl,programInfo,primitivesData,primitivesBuffers,moves,bullets
 	setUniformModelViewMatrix(gl,modelViewMatrix,programInfo.uniformLocationsM);
 	setUniformParallelMatrix(gl,meParallelMatrix,programInfo.uniformLocationsM);
 	gl.drawElements(gl.TRIANGLES,me.buffers.length,gl.UNSIGNED_SHORT,0);
-
-	let isDetected = collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,elasped);
-	return isDetected;
 }
 
 function collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,elasped){
@@ -222,9 +142,11 @@ function collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,elas
 				posBulletCenter[1] += -r * Math.cos(theta) * dt;
 			}
 			// is near enough to check in detail?
+			/*
 			if(dist(posMe,posBulletCenter) > modelViewMatrix[0] * (me.r+primitive.size)){
 				continue;
 			}
+			*/
 			// calculate outer vertex position(relative to center pos)
 			let posArray = [];
 			const vnum = primitive.outer.length;
@@ -238,17 +160,17 @@ function collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,elas
 				let magnifedY = rotedY * modelViewMatrix[5];
 				posArray.push([magnifedX,magnifedY]);
 			}
+			posArray.push(posArray[0]);
 			let posM = [posMe[0]-posBulletCenter[0],posMe[1]-posBulletCenter[1]];
 			// compare posArray and posM(not PosMe!)
 			let innerCheck = true;
-			for(let k = 1; k < vnum; k++){ // do for each line segment
+			for(let k = 1; k <= vnum; k++){ // do for each line segment
 				const posA = posArray[k-1];
 				const posB = posArray[k];
 			// if center of me is inner, crossProduct >= 0 for all segment.
 				const vecAB = [posB[0]-posA[0], posB[1]-posA[1]];
 				const vecAM = [posM[0]-posA[0], posM[1]-posA[1]];
 				const vecBM = [posM[0]-posB[0], posM[1]-posB[1]];
-
 				if(crossProduct(vecAB,vecAM) < 0.0){
 					innerCheck = false;
 				}
@@ -271,7 +193,7 @@ function collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,elas
 				else{ // near line AB
 					distFromAB = Math.sqrt(lenAM*lenAM - lenProj*lenProj);
 				}
-				if(distFromAB < me.r){
+				if(distFromAB < modelViewMatrix[0] * me.r){
 					return true;
 				}
 			}
