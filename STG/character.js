@@ -4,8 +4,9 @@ class Me{
     this.x = x;
     this.y = y;
     this.core = getCore(r);
-    this.buffers = initPrimitiveBuffers(gl,this.core);
+    this.buffers = initBuffers(gl,this.core);
     this.move = moveConstantVelocity(0.0,[0.0,0.0]);
+    this.transparent = 1.0;
   }
   pos(){
     return [this.x,this.y];

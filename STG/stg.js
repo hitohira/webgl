@@ -10,7 +10,7 @@ function bulletsGC(bullets,now){
 	}
 }
 
-function initPrimitiveBuffers(gl,arrays){
+function initBuffers(gl,arrays){
 	const positionBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arrays.position),gl.STATIC_DRAW);
@@ -30,24 +30,7 @@ function initPrimitiveBuffers(gl,arrays){
 		length: arrays.index.length,
 	};
 }
-function enablePrimitiveBuffers(gl,attribL,uniformL,primitiveBuffers){
-	gl.bindBuffer(gl.ARRAY_BUFFER,primitiveBuffers.position);
-	gl.vertexAttribPointer(attribL.vertexPosition,3,gl.FLOAT,false,0,0);
-	gl.enableVertexAttribArray(attribL.vertexPosition);
 
-	gl.bindBuffer(gl.ARRAY_BUFFER,primitiveBuffers.color);
-	gl.vertexAttribPointer(attribL.vertexColor,4,gl.FLOAT,false,0,0);
-	gl.enableVertexAttribArray(attribL.vertexColor);
-
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,primitiveBuffers.index);
-}
-
-function setUniformModelViewMatrix(gl,modelViewMatrix,uniformL){
-	gl.uniformMatrix4fv(uniformL.modelViewMatrix,false,modelViewMatrix);
-}
-function setUniformParallelMatrix(gl,parallelMatrix,uniformL){
-	gl.uniformMatrix4fv(uniformL.parallelMatrix,false,parallelMatrix);
-}
 
 function getModelViewMatrix(gl){
 	const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -87,14 +70,16 @@ function drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bul
   gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+	// gl.enable(gl.BLEND);
+	// gl.disable(gl.BLEND);
 
 	// draw bullets
-
 	gl.useProgram(programInfo.bulletProgram);
 	setUniformModelViewMatrix(gl,modelViewMatrix,programInfo.uniformLocationsB);
 	gl.uniform1f(programInfo.uniformLocationsB.elasped,elasped);
 	for(let i = 0; i < bullets.length; i++){
-		enablePrimitiveBuffers(gl,programInfo.attribLocationsB,programInfo.uniformLocationsB,primitivesBuffers[i]);
+		enableBuffers(gl,programInfo.attribLocationsB,programInfo.uniformLocationsB,primitivesBuffers[i]);
 		setUniformMoveB(gl,programInfo,moves[i]);
 		for(let j = 0; j < bullets[i].length; j++){
 			setUniformBullet(gl,programInfo,bullets[i][j]);
@@ -105,7 +90,7 @@ function drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bul
 	// draw me
 	let meParallelMatrix = getParallelMatrix(me.pos()); //TODO
 	gl.useProgram(programInfo.meProgram);
-	enablePrimitiveBuffers(gl,programInfo.attribLocationsM,programInfo.uniformLocationsM,me.buffers);
+	enableBuffers(gl,programInfo.attribLocationsM,programInfo.uniformLocationsM,me.buffers);
 	setUniformModelViewMatrix(gl,modelViewMatrix,programInfo.uniformLocationsM);
 	setUniformParallelMatrix(gl,meParallelMatrix,programInfo.uniformLocationsM);
 	gl.drawElements(gl.TRIANGLES,me.buffers.length,gl.UNSIGNED_SHORT,0);

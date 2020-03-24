@@ -133,3 +133,145 @@ function loadShader(gl,type,source){
 	}
 	return shader;
 }
+
+//////////////////////////
+/// set attrib or uniform
+//////////////////////////
+function enableBuffers(gl,attribL,uniformL,buffers){
+	gl.bindBuffer(gl.ARRAY_BUFFER,buffers.position);
+	gl.vertexAttribPointer(attribL.vertexPosition,3,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(attribL.vertexPosition);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER,buffers.color);
+	gl.vertexAttribPointer(attribL.vertexColor,4,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(attribL.vertexColor);
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buffers.index);
+}
+
+function setUniformModelViewMatrix(gl,modelViewMatrix,uniformL){
+	gl.uniformMatrix4fv(uniformL.modelViewMatrix,false,modelViewMatrix);
+}
+function setUniformParallelMatrix(gl,parallelMatrix,uniformL){
+	gl.uniformMatrix4fv(uniformL.parallelMatrix,false,parallelMatrix);
+}
+////////////////
+// for Texture
+////////////////
+function loadImageCPS(source,onloadFunc,onLoadArg){
+	let img = new Image();
+	img.onload = onloadFunc(onLoadArg);
+	img.src = source;
+}
+
+// img should have already been loaded before this function is called (use img.onload trigger!!)
+function loadTexture(img){
+	const tex = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D,tex);
+	gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
+	gl.generateMipmap(gl.TEXTURE_2D);
+	return tex;
+}
+
+function vsCodeTex(){
+	return `
+		attribute vec3 aVertexPosition;
+		attribute vec4 aVertexColor;
+		attribute vec2 aTextureCoord;
+		uniform mat4 uModelViewMatrix;
+		uniform vec4 uCharcterPosition;
+
+		varying lowp vec4 vColor;
+		varying lowp vec vTextureCoord;
+
+
+		void main(){
+			vec4 interPosition = vec4(aVertexPosition,1.0);
+
+			mat4 parallelMatrix = mat4(
+					 1.0,   0.0,   0.0, 0.0,
+					 0.0,   1.0,   0.0, 0.0,
+					 0.0,   0.0,   1.0, 0.0,
+				uCharcterPosition[0],uCharcterPosition[1],uCharcterPosition[2], 1.0
+			);
+			float theta = uCharcterPosition[3];
+			mat4 RotationMatrix = mat4(
+				 cos(theta), sin(theta), 0.0, 0.0,
+				-sin(theta), cos(theta), 0.0, 0.0,
+								0.0,        0.0, 1.0, 0.0,
+								0.0,        0.0, 0.0, 1.0
+			);
+
+			gl_Position = parallelMatrix * uModelViewMatrix * RotationMatrix * interPosition;
+			vColor = aVertexColor;
+			vTextureCoord = aTextureCoord;
+		}
+	`;
+}
+function fsCodeTex(){
+	return `
+		uniform sampler2D texture;
+		uniform lowp float uTransparent;
+		varying lowp vec4 vColor;
+		varying lowp vec2 vTextureCoord;
+
+		void main(){
+			vec4 smpColor = texture2D(texture,vTextureCoord);
+			gl_FragColor = vec4(vColor.xyz,vColor[3]*uTransparent) * smpColor;
+		}
+	`;
+}
+function textureBoard(){
+	return {
+		position : [
+			-1.0, 1.0, 0.0,
+			 1.0, 1.0, 0.0,
+			-1.0,-1.0, 0.0,
+			 1.0,-1.0, 0.0,
+		],
+		color : [
+			1.0,1.0,1.0,1.0,
+			1.0,1.0,1.0,1.0,
+			1.0,1.0,1.0,1.0,
+			1.0,1.0,1.0,1.0,
+		],
+		index : [
+			0,1,2,
+			3,2,1,
+		],
+		textureCoord : [
+			0.0,0.0,
+			1.0,0.0,
+			0.0,1.0,
+			1.0,1.0,
+		],
+	};
+}
+function textureAttribLocations(shaderProgram){
+	return {
+		vertexPosition : gl.getAttribLocation(shaderProgram,"aVertexPosition"),
+		vertexColor : gl.getAttribLocation(shaderProgram,"aVertexColor"),
+		textureCoord : gl.getAttribLocation(shaderProgram,"aTextureCoord"),
+	};
+}
+function textureUniformLocations(shaderProgram){
+	return {
+		modelViewMatrix : gl.getUniformLocation(shaderProgram,"uModelViewMatrix"),
+		charcterPosition : gl.getUniformLocation(shaderProgram,"uCharcterPosition"),
+		texture : gl.getUniformLocation(shader,"uTexture"),
+		transparent: gl.getUniformLocation(shader,"uTransparent"),
+	}
+}
+function drawTexture(shaderProgram,modelViewMatrix,attribLocations,uniformLocations,buffers,texure,charPos,transparent){
+	gl.useProgram(shaderProgram);
+
+	enableBuffers(gl,attribLocations,uniformLocations,buffers);
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D,texture);
+	gl.uniform1i(uniformLocations.texture,0);
+	setUniformModelViewMatrix(gl,modelViewMatrix,uniformLocations);
+	gl.uniform4fv(uniformLocations.charcterPosition,charPos);
+	gl.uniform1f(uniformLocations.transparent,transparent);
+
+	gl.drawElements(gl.TRIANGLES,buffers.length,gl.UNSIGNED_SHORT,0);
+}

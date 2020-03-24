@@ -10,13 +10,32 @@ div.canvas-wrapper{
 }
 div.text-content{
   position: absolute;
-  left: 0px;
+  left: 10px;
 	top: 0px;
-  width : 750px;
-  height :900px;
+  padding-left: 10px;
+  padding-right: 30px;
+  width : 690px;
+  height :240px;
   color: red;
   font-size: 100px;
   text-align: center;
+  text-stroke: 1px white;
+  -webkit-text-stroke: 1px white;
+}
+div.talker-content{
+  position: absolute;
+  left: 10px;
+	top: 590px;
+  padding-left: 10px;
+  padding-right: 30px;
+  width : 200px;
+  height :50px;
+  color: blue;
+  font-size: 40px;
+  text-align: left;
+  text-stroke: 1px white;
+  -webkit-text-stroke: 1px white;
+  font-weight: 600;
 }
 
 

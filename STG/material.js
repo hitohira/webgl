@@ -1,12 +1,12 @@
 // generation
 /*
- * attribute vec3 aTime; 初期停止時間の終わる時刻、第一運動時間の終わる時刻、一時停止時間の終わる時刻
- * attribute vec4 aX0; 初期位置x,y,z,θ
- * attribute vec2 aV1; 自身の向き方向に対する初期速度v,ω
- * attribute vec2 aA1; 自身の向き方向に対する加速度a,γ
- * attribute float aVStopRot; 一時停止中の角速度
- * attribute vec2 aV2; 一時停止後の初期速度
- * attribute vec2 aA2; 一時停止後の加速度
+ * vec3 aTime; 初期停止時間の終わる時刻、第一運動時間の終わる時刻、一時停止時間の終わる時刻
+ * vec4 aX0; 初期位置x,y,z,θ
+ * vec2 aV1; 自身の向き方向に対する初期速度v,ω
+ * vec2 aA1; 自身の向き方向に対する加速度a,γ
+ * float aVStopRot; 一時停止中の角速度
+ * vec2 aV2; 一時停止後の初期速度
+ * vec2 aA2; 一時停止後の加速度
  */
 function moveRaw(time,v1,a1,vStopRot,v2,a2){
 	return {
@@ -49,6 +49,7 @@ function moveConstantVelocityW(time,v1,vStopRot,v2){
 	};
 }
 
+// x0 - [x,y,z,theta]
 function setBullet(start,x0,lifetime){
 	return {
 		start: start,
@@ -56,7 +57,12 @@ function setBullet(start,x0,lifetime){
 		lifetime: lifetime,
 	};
 }
-// shape
+// primitive
+// position : vertex position(vec3)
+// color : vertex color(vec4)
+// index : for drawElements
+// outer : for collision detection, outer vertex
+// size : circle whose radius is "size" contains this primitve
 function getRectangle(){
 	return {
 		position: [
@@ -153,6 +159,7 @@ function getTriangle(){
 	};
 }
 
+// core of me, circle
 function getCore(r){
 	const num = 20;
 	let pos = [0.0,0.0,0.0];

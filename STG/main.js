@@ -34,11 +34,11 @@ function main(){
 		},
 	};
 
-	// set shape list of bullets
+	// set primitive list of bullets
 	const triangle = getTriangle();
 	const rect = getRectangle();
-	const triangleBuffers = initPrimitiveBuffers(gl,triangle);
-	const rectangleBuffers = initPrimitiveBuffers(gl,rect);
+	const triangleBuffers = initBuffers(gl,triangle);
+	const rectangleBuffers = initBuffers(gl,rect);
 	let primitivesBuffers = [rectangleBuffers,triangleBuffers];
 	let primitivesData = [rect,triangle];
 
@@ -75,7 +75,9 @@ function main(){
 		let isDetected = collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,now);
 		if(isDetected){
 			state = 1;
-			drawText("GAME OVER");
+			drawText("GAME OVER","red","200px","90px");
+			drawTalk("魔女","GAME OVER");
+		//	clearText();
 		}
 		else{
 			requestAnimationFrame(render);
@@ -83,9 +85,4 @@ function main(){
 	}
 
 	requestAnimationFrame(render);
-}
-
-function drawText(str){
-	const div = document.getElementById("text");
-	div.innerHTML = str;
 }
