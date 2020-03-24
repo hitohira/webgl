@@ -1,5 +1,6 @@
 class Inputs {
   constructor(){
+    this.come = false;
     this.shift = false;
     this.right = false;
     this.left = false;
@@ -28,6 +29,7 @@ class Inputs {
 
 function addUIEvent(me,inputs){
   document.addEventListener('keydown', (event) => {
+    this.come = true;
     switch(event.keyCode){
       case 16: // shift
         inputs.shift = true;

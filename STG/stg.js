@@ -10,27 +10,6 @@ function bulletsGC(bullets,now){
 	}
 }
 
-function initBuffers(gl,arrays){
-	const positionBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arrays.position),gl.STATIC_DRAW);
-
-	const colorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arrays.color),gl.STATIC_DRAW);
-
-	const indexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(arrays.index),gl.STATIC_DRAW);
-
-	return {
-		position: positionBuffer,
-		color: colorBuffer,
-		index: indexBuffer,
-		length: arrays.index.length,
-	};
-}
-
 
 function getModelViewMatrix(gl){
 	const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -64,14 +43,14 @@ function setUniformBullet(gl,programInfo,bullet){
 	gl.uniform4fv(programInfo.uniformLocationsB.x0,bullet.x0);
 }
 
-function drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bullets,me,elasped){
+function drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bullets,me,enemies,elasped){
 	gl.clearColor(0.0,0.0,0.0,1.0);
   gl.clearDepth(1.0);
   gl.enable(gl.DEPTH_TEST);
   gl.depthFunc(gl.LEQUAL);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-	// gl.enable(gl.BLEND);
+	gl.enable(gl.BLEND);
 	// gl.disable(gl.BLEND);
 
 	// draw bullets
@@ -94,6 +73,12 @@ function drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bul
 	setUniformModelViewMatrix(gl,modelViewMatrix,programInfo.uniformLocationsM);
 	setUniformParallelMatrix(gl,meParallelMatrix,programInfo.uniformLocationsM);
 	gl.drawElements(gl.TRIANGLES,me.buffers.length,gl.UNSIGNED_SHORT,0);
+
+	// draw enemies
+	for(let i = 0; i < enemies.length; i++){
+		const enemy = enemies[i];
+		enemies[i].draw(gl,modelViewMatrix);
+	}
 }
 
 function collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,elasped){

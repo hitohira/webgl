@@ -1,5 +1,9 @@
+main();
+
+
 function main(){
 	let gl = initCanvas();
+
 	const vsSource = vsCode();
 	const vsSource2 = vsCode2();
 	const fsSource = fsCode();
@@ -55,7 +59,8 @@ function main(){
 	let me = new Me(gl,0.0,-0.4,0.6);
 	let inputs = new Inputs();
 	addUIEvent(me,inputs);
-	let witch = new Witch(0.0,0.5,then);
+	let witch = new Witch(gl,0.0,0.5,then);
+	let enemies = [witch];
 
 	let modelViewMatrix = getModelViewMatrix(gl);
 	let state = 0; // 0:shooting, 1:gameover
@@ -71,12 +76,11 @@ function main(){
 			bulletsGC(bullets,now);
 			timerGC = now;
 		}
-		drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bullets,me,now);
+		drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bullets,me,enemies,now);
 		let isDetected = collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,now);
 		if(isDetected){
 			state = 1;
-			drawText("GAME OVER","red","200px","90px");
-			drawTalk("魔女","GAME OVER");
+			drawTalk("魔女","ゲームオーバーですよー");
 		//	clearText();
 		}
 		else{

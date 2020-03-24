@@ -30,13 +30,26 @@ class Me{
 }
 
 class Witch{
-  constructor(x,y,then){
+  constructor(gl,x,y,then){
     this.x = x;
     this.y = y;
+    this.theta = 0.0;
     this.timer = then;
     this.thetaOfs = 0.0;
     this.timer2 = then;
     this.rotCount = 0;
+    this.transparent = 1.0;
+
+    const vsSource = vsCodeTex();
+    const fsSource = fsCodeTex();
+    this.shader = initShaderProgram(gl,vsSource,fsSource);
+    this.textures = [];
+
+    loadTexture(gl,"img/Witch.png",this.textures);
+  	const board = textureBoard();
+  	this.buffers = initBuffersTex(gl,board);
+    this.attribL = textureAttribLocations(gl,this.shader);
+    this.uniformL = textureUniformLocations(gl,this.shader);
   }
 
   generateBullets(gl,now,globalBullets){
@@ -63,6 +76,24 @@ class Witch{
       this.rotCount = (this.rotCount + 1) % num2;
       const b = setBullet(now,[this.x+r2*Math.sin(theta),this.y-r2*aspect*Math.cos(theta),0.0,theta],10.0);
       globalBullets[0].push(b);
+    }
+  }
+
+  charPos(){
+    return [this.x,this.y,0.0,this.theta];
+  }
+  draw(gl,modelViewMatrix){
+    if(this.textures.length > 0){
+      drawTexture(gl,
+        this.shader,
+        modelViewMatrix,
+        this.attribL,
+        this.uniformL,
+        this.buffers,
+        this.textures[0],
+        this.charPos(),
+        this.transparent
+      );
     }
   }
 }

@@ -134,6 +134,39 @@ function loadShader(gl,type,source){
 	return shader;
 }
 
+function initBuffers(gl,arrays){
+	const positionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arrays.position),gl.STATIC_DRAW);
+
+	const colorBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arrays.color),gl.STATIC_DRAW);
+
+	const indexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indexBuffer);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(arrays.index),gl.STATIC_DRAW);
+
+	return {
+		position: positionBuffer,
+		color: colorBuffer,
+		index: indexBuffer,
+		length: arrays.index.length,
+	};
+}
+function initBuffersTex(gl,arrays){
+	let bufs = initBuffers(gl,arrays);
+	const texBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,texBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arrays.textureCoord),gl.STATIC_DRAW);
+	return {
+		position: bufs.position,
+		color: bufs.color,
+		index: bufs.index,
+		textureCoord: texBuffer,
+		length: bufs.length,
+	};
+}
 //////////////////////////
 /// set attrib or uniform
 //////////////////////////
@@ -148,6 +181,21 @@ function enableBuffers(gl,attribL,uniformL,buffers){
 
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buffers.index);
 }
+function enableBuffersTex(gl,attribL,uniformL,buffers){
+	gl.bindBuffer(gl.ARRAY_BUFFER,buffers.position);
+	gl.vertexAttribPointer(attribL.vertexPosition,3,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(attribL.vertexPosition);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER,buffers.color);
+	gl.vertexAttribPointer(attribL.vertexColor,4,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(attribL.vertexColor);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER,buffers.textureCoord);
+	gl.vertexAttribPointer(attribL.textureCoord,2,gl.FLOAT,false,0,0);
+	gl.enableVertexAttribArray(attribL.textureCoord);
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buffers.index);
+}
 
 function setUniformModelViewMatrix(gl,modelViewMatrix,uniformL){
 	gl.uniformMatrix4fv(uniformL.modelViewMatrix,false,modelViewMatrix);
@@ -158,19 +206,21 @@ function setUniformParallelMatrix(gl,parallelMatrix,uniformL){
 ////////////////
 // for Texture
 ////////////////
-function loadImageCPS(source,onloadFunc,onLoadArg){
-	let img = new Image();
-	img.onload = onloadFunc(onLoadArg);
+let img = new Image();
+function loadTexture(gl,source,textures){
+//	let img = new Image();
+	img.onload = function(){
+		const tex = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D,tex);
+		gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+		gl.generateMipmap(gl.TEXTURE_2D);
+		gl.bindTexture(gl.TEXTURE_2D,null);
+		textures.push(tex);
+		console.log("hello");
+	}
 	img.src = source;
-}
-
-// img should have already been loaded before this function is called (use img.onload trigger!!)
-function loadTexture(img){
-	const tex = gl.createTexture();
-	gl.bindTexture(gl.TEXTURE_2D,tex);
-	gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
-	gl.generateMipmap(gl.TEXTURE_2D);
-	return tex;
 }
 
 function vsCodeTex(){
@@ -182,7 +232,7 @@ function vsCodeTex(){
 		uniform vec4 uCharcterPosition;
 
 		varying lowp vec4 vColor;
-		varying lowp vec vTextureCoord;
+		varying lowp vec2 vTextureCoord;
 
 
 		void main(){
@@ -210,10 +260,11 @@ function vsCodeTex(){
 }
 function fsCodeTex(){
 	return `
+		precision lowp float;
 		uniform sampler2D texture;
-		uniform lowp float uTransparent;
-		varying lowp vec4 vColor;
-		varying lowp vec2 vTextureCoord;
+		uniform float uTransparent;
+		varying vec4 vColor;
+		varying vec2 vTextureCoord;
 
 		void main(){
 			vec4 smpColor = texture2D(texture,vTextureCoord);
@@ -224,10 +275,10 @@ function fsCodeTex(){
 function textureBoard(){
 	return {
 		position : [
-			-1.0, 1.0, 0.0,
-			 1.0, 1.0, 0.0,
-			-1.0,-1.0, 0.0,
-			 1.0,-1.0, 0.0,
+			-6.0, 6.0, 0.0,
+			 6.0, 6.0, 0.0,
+			-6.0,-6.0, 0.0,
+			 6.0,-6.0, 0.0,
 		],
 		color : [
 			1.0,1.0,1.0,1.0,
@@ -247,25 +298,25 @@ function textureBoard(){
 		],
 	};
 }
-function textureAttribLocations(shaderProgram){
+function textureAttribLocations(gl,shaderProgram){
 	return {
 		vertexPosition : gl.getAttribLocation(shaderProgram,"aVertexPosition"),
 		vertexColor : gl.getAttribLocation(shaderProgram,"aVertexColor"),
 		textureCoord : gl.getAttribLocation(shaderProgram,"aTextureCoord"),
 	};
 }
-function textureUniformLocations(shaderProgram){
+function textureUniformLocations(gl,shaderProgram){
 	return {
 		modelViewMatrix : gl.getUniformLocation(shaderProgram,"uModelViewMatrix"),
 		charcterPosition : gl.getUniformLocation(shaderProgram,"uCharcterPosition"),
-		texture : gl.getUniformLocation(shader,"uTexture"),
-		transparent: gl.getUniformLocation(shader,"uTransparent"),
+		texture : gl.getUniformLocation(shaderProgram,"uTexture"),
+		transparent: gl.getUniformLocation(shaderProgram,"uTransparent"),
 	}
 }
-function drawTexture(shaderProgram,modelViewMatrix,attribLocations,uniformLocations,buffers,texure,charPos,transparent){
+function drawTexture(gl,shaderProgram,modelViewMatrix,attribLocations,uniformLocations,buffers,texture,charPos,transparent){
 	gl.useProgram(shaderProgram);
 
-	enableBuffers(gl,attribLocations,uniformLocations,buffers);
+	enableBuffersTex(gl,attribLocations,uniformLocations,buffers);
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D,texture);
 	gl.uniform1i(uniformLocations.texture,0);
