@@ -1,3 +1,19 @@
+function distance(p1,p2){
+	const x = p1[0]-p2[0];
+	const y = p1[1]-p2[1];
+	return Math.sqrt(x*x + y*y);
+}
+function norm(vec){
+	return Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1]);
+}
+
+function crossProduct(p1,p2){
+	return p1[0]*p2[1] - p1[1]*p2[0];
+}
+function dotProduct(p1,p2){
+	return p1[0]*p2[0] + p1[1]*p2[1];
+}
+
 /* aTime = [初期停止時間の終わる時刻、第一運動時間の終わる時刻、一時停止時間の終わる時刻]
  * aX0 初期位置x,y,z,θ
  * aV1 自身の向き方向に対する初期速度v,ω
@@ -206,9 +222,8 @@ function setUniformParallelMatrix(gl,parallelMatrix,uniformL){
 ////////////////
 // for Texture
 ////////////////
-let img = new Image();
 function loadTexture(gl,source,textures){
-//	let img = new Image();
+	let img = new Image();
 	img.onload = function(){
 		const tex = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D,tex);
@@ -218,7 +233,6 @@ function loadTexture(gl,source,textures){
 		gl.generateMipmap(gl.TEXTURE_2D);
 		gl.bindTexture(gl.TEXTURE_2D,null);
 		textures.push(tex);
-		console.log("hello");
 	}
 	img.src = source;
 }

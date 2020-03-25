@@ -1,16 +1,4 @@
 
-// TODO 処理が重いようならQueueを使うなりして削除のコストを下げるべし
-function bulletsGC(bullets,now){
-	for(let i = 0; i < bullets.length; i++){
-		for(let j = 0; j < bullets[i].length; j++){
-			if(bullets[i][j].lifetime < now - bullets[i][j].start){
-				bullets[i].splice(0,j);
-			}
-		}
-	}
-}
-
-
 function getModelViewMatrix(gl){
 	const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
 	const magnif = 0.03;
@@ -43,7 +31,12 @@ function setUniformBullet(gl,programInfo,bullet){
 	gl.uniform4fv(programInfo.uniformLocationsB.x0,bullet.x0);
 }
 
-function drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bullets,me,enemies,elasped){
+function drawSceneSTG(gl,programInfo,objData,elasped){
+	const bullets = objData.bullets;
+	const me = objData.me;
+	const enemies = objData.enemies;
+	const modelViewMatrix = objData.modelViewMatrix;
+
 	gl.clearColor(0.0,0.0,0.0,1.0);
   gl.clearDepth(1.0);
   gl.enable(gl.DEPTH_TEST);
@@ -57,12 +50,12 @@ function drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bul
 	gl.useProgram(programInfo.bulletProgram);
 	setUniformModelViewMatrix(gl,modelViewMatrix,programInfo.uniformLocationsB);
 	gl.uniform1f(programInfo.uniformLocationsB.elasped,elasped);
-	for(let i = 0; i < bullets.length; i++){
-		enableBuffers(gl,programInfo.attribLocationsB,programInfo.uniformLocationsB,primitivesBuffers[i]);
-		setUniformMoveB(gl,programInfo,moves[i]);
-		for(let j = 0; j < bullets[i].length; j++){
-			setUniformBullet(gl,programInfo,bullets[i][j]);
-			gl.drawElements(gl.TRIANGLES,primitivesBuffers[i].length,gl.UNSIGNED_SHORT,0);
+	for(let i = 0; i < bullets.instance.length; i++){
+		enableBuffers(gl,programInfo.attribLocationsB,programInfo.uniformLocationsB,bullets.buffers[i]);
+		setUniformMoveB(gl,programInfo,bullets.moves[i]);
+		for(let j = 0; j < bullets.instance[i].length; j++){
+			setUniformBullet(gl,programInfo,bullets.instance[i][j]);
+			gl.drawElements(gl.TRIANGLES,bullets.buffers[i].length,gl.UNSIGNED_SHORT,0);
 		}
 	}
 
@@ -81,16 +74,20 @@ function drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bul
 	}
 }
 
-function collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,elasped){
+function collisionDetection(objData,elasped){
+	const me = objData.me;
+	const bullets = objData.bullets;
+	const modelViewMatrix = objData.modelViewMatrix;
+
 	const posMe = me.pos();
 
 	//for all bullets
-	for(let i = 0; i < bullets.length; i++){
-		const primitive = primitivesData[i];
-		const move = moves[i];
-		for(let j = 0; j < bullets[i].length; j++){
+	for(let i = 0; i < bullets.instance.length; i++){
+		const primitive = bullets.primitives[i];
+		const move = bullets.moves[i];
+		for(let j = 0; j < bullets.instance[i].length; j++){
 
-			const bullet = bullets[i][j];
+			const bullet = bullets.instance[i][j];
 			const existing_time = elasped - bullet.start;
 			const time = move.time;
 
@@ -112,11 +109,10 @@ function collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,elas
 				posBulletCenter[1] += -r * Math.cos(theta) * dt;
 			}
 			// is near enough to check in detail?
-			/*
-			if(dist(posMe,posBulletCenter) > modelViewMatrix[0] * (me.r+primitive.size)){
+			if(distance(posMe,posBulletCenter) > modelViewMatrix[0] * (me.r+primitive.size)){
 				continue;
 			}
-			*/
+
 			// calculate outer vertex position(relative to center pos)
 			let posArray = [];
 			const vnum = primitive.outer.length;
@@ -173,20 +169,4 @@ function collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,elas
 		}
 	}
 	return false;
-}
-
-function dist(p1,p2){
-	const x = p1[0]-p2[0];
-	const y = p1[1]-p2[1];
-	return Math.sqrt(x*x + y*y);
-}
-function norm(vec){
-	return Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1]);
-}
-
-function crossProduct(p1,p2){
-	return p1[0]*p2[1] - p1[1]*p2[0];
-}
-function dotProduct(p1,p2){
-	return p1[0]*p2[0] + p1[1]*p2[1];
 }

@@ -40,7 +40,7 @@ function main(){
 
 	// set primitive list of bullets
 	const triangle = getTriangle();
-	const rect = getRectangle();
+	const rect = getRectangle(2.0,2.0);
 	const triangleBuffers = initBuffers(gl,triangle);
 	const rectangleBuffers = initBuffers(gl,rect);
 	let primitivesBuffers = [rectangleBuffers,triangleBuffers];
@@ -51,9 +51,9 @@ function main(){
 	const move1 = moveConstantAcceleration(0.8,[0.0,0.0],[0.15,0]);
 	let moves = [move1,move0];
 
-	let bullets = [[],[]];
+	let bullets = new Bullets(primitivesData,primitivesBuffers,moves);
+	let shots = new Shots();
 
-	let timerGC = 0.0;
 	let then = 0.0;
 
 	let me = new Me(gl,0.0,-0.4,0.6);
@@ -63,24 +63,32 @@ function main(){
 	let enemies = [witch];
 
 	let modelViewMatrix = getModelViewMatrix(gl);
+
+	let objData = {
+		bullets: bullets,
+		shots: shots,
+		me: me,
+		enemies: enemies,
+		modelViewMatrix: modelViewMatrix,
+	};
+
 	let state = 0; // 0:shooting, 1:gameover
 	function render(now){
 		now *= 0.001;
 		then = now;
 
+		bullets.garbageCollection(now);
 		witch.generateBullets(gl,now,bullets);
-
 		inputs.update(me);
-
-		if(now - timerGC > 1.0){
-			bulletsGC(bullets,now);
-			timerGC = now;
+		if(inputs.shot){
+			me.shot(now,shots);
 		}
-		drawSceneSTG(gl,programInfo,modelViewMatrix,primitivesBuffers,moves,bullets,me,enemies,now);
-		let isDetected = collisionDetection(me,primitivesData,moves,bullets,modelViewMatrix,now);
+
+		drawSceneSTG(gl,programInfo,objData,now);
+		let isDetected = collisionDetection(objData,now);
 		if(isDetected){
 			state = 1;
-			drawTalk("魔女","ゲームオーバーですよー");
+			drawTalk("魔女","ゲームオーバーですよー<br>もっと真面目にやれー");
 		//	clearText();
 		}
 		else{

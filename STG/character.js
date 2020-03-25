@@ -1,33 +1,6 @@
-class Me{
-  constructor(gl,x,y,r){
-    this.r = r;
-    this.x = x;
-    this.y = y;
-    this.core = getCore(r);
-    this.buffers = initBuffers(gl,this.core);
-    this.move = moveConstantVelocity(0.0,[0.0,0.0]);
-    this.transparent = 1.0;
-  }
-  pos(){
-    return [this.x,this.y];
-  }
-  updatePosition(dx,dy){
-    this.x += dx;
-    this.y -= dy;
-    if(this.x > 1.0){
-      this.x = 1.0;
-    }
-    else if(this.x < -1.0){
-      this.x = -1.0;
-    }
-    if(this.y > 1.0){
-      this.y = 1.0;
-    }
-    else if(this.y < -1.0){
-      this.y = -1.0;
-    }
-  }
-}
+//////////////////////
+/// enemy
+//////////////////////
 
 class Witch{
   constructor(gl,x,y,then){
@@ -65,7 +38,7 @@ class Witch{
         bullets.push(b);
       }
       this.thetaOfs += Math.PI / 12.0;
-      Array.prototype.push.apply(globalBullets[1],bullets);
+      Array.prototype.push.apply(globalBullets.instance[1],bullets);
     }
 
     if(now - this.timer2 > 0.07){
@@ -75,7 +48,7 @@ class Witch{
       const theta = 2.0 * Math.PI / num2 * this.rotCount;
       this.rotCount = (this.rotCount + 1) % num2;
       const b = setBullet(now,[this.x+r2*Math.sin(theta),this.y-r2*aspect*Math.cos(theta),0.0,theta],10.0);
-      globalBullets[0].push(b);
+      globalBullets.instance[0].push(b);
     }
   }
 
@@ -94,6 +67,104 @@ class Witch{
         this.charPos(),
         this.transparent
       );
+    }
+  }
+}
+
+////////////////////////////
+/// me
+////////////////////////////
+class ShotGenerator{
+  constructor(x,y){
+    this.relX = x; // relative position to me
+    this.relY = y;
+    this.interval = 0.3;
+    this.prevShot = -100.0;
+  }
+  generateShot(now,mePos,shots){
+    if(now - this.prevShot < this.interval){
+      return;
+    }
+    this.prevShot = now;
+    const data = {
+      start: now,
+      pos: [mePos[0]+this.relX,mePos[y]+this.relY],
+      lifetime: 10.0,
+    }
+    shots.straight.push(data);
+    shots.tracking.push(data);
+  }
+}
+class Shots{
+  constructor(){
+    this.straight = [];
+    this.tracking = [];
+    this.speed = 0.1;
+  }
+  updatePosition(now,enemies){
+    for(let i = 0; i < this.straight.length; i++){
+      this.straight[i].pos[1] -= this.speed;
+    }
+    for(let i = 0; i < this.tracking.length; i++){
+      let myPos = this.tracking[i].pos;
+      let ePos = findNearEnemy(this.tracking[i].pos,enemies);
+      let dir = [ePos[0] - mypos[0],ePos[1] - mypos[0]];
+      let r = norm(dir);
+      let normDir = [dir[0]/r,dir[1]/r];
+      myPos[0] += normDir[0];
+      mypos[1] += normDir[1];
+    }
+  }
+  findNearEnemy(pos,enemies){
+    let minDist = 10000.0;
+    let minPos = [pos[0],pos[1]-10000.0];
+    for(let i = 0; i < enemies.length; i++){
+      let ePos3 = enemies[i].charPos();
+      let ePos = [ePos3[0],ePos3[1]];
+      let dist = distance(pos,epos);
+      if(dist < minDist){
+        minDist = dist;
+        minPos = ePos;
+      }
+    }
+    return minPos;
+  }
+}
+class Me{
+  constructor(gl,x,y,r){
+    this.r = r;
+    this.x = x;
+    this.y = y;
+    this.core = getCore(r);
+    this.buffers = initBuffers(gl,this.core);
+    this.move = moveConstantVelocity(0.0,[0.0,0.0]);
+    this.transparent = 1.0;
+
+    this.shotSpeed = 0.2;
+    this.shotGenerators = [new ShotGenerator(0.0,r+0.1)];
+  }
+  pos(){
+    return [this.x,this.y];
+  }
+  updatePosition(dx,dy){
+    this.x += dx;
+    this.y -= dy;
+    if(this.x > 1.0){
+      this.x = 1.0;
+    }
+    else if(this.x < -1.0){
+      this.x = -1.0;
+    }
+    if(this.y > 1.0){
+      this.y = 1.0;
+    }
+    else if(this.y < -1.0){
+      this.y = -1.0;
+    }
+  }
+  shot(now,shots){
+    for(let i = 0; i < shotGenerators.length; i++){
+      shotGenerators[i].generateShot(now,this.pos(),shots);
     }
   }
 }
