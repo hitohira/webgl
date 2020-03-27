@@ -4,40 +4,6 @@ main();
 function main(){
 	let gl = initCanvas();
 
-	const vsSource = vsCode();
-	const vsSource2 = vsCode2();
-	const fsSource = fsCode();
-	const bulletShaderProgram = initShaderProgram(gl,vsSource,fsSource);
-	const meShaderProgram = initShaderProgram(gl,vsSource2,fsSource);
-	const programInfo = {
-		bulletProgram: bulletShaderProgram,
-		attribLocationsB: {
-			vertexPosition : gl.getAttribLocation(bulletShaderProgram,"aVertexPosition"),
-			vertexColor: gl.getAttribLocation(bulletShaderProgram,"aVertexColor"),
-		},
-		uniformLocationsB: {
-			modelViewMatrix : gl.getUniformLocation(bulletShaderProgram,"uModelViewMatrix"),
-			elasped: gl.getUniformLocation(bulletShaderProgram,"uElasped"),
-			start: gl.getUniformLocation(bulletShaderProgram,"uStart"),
-			time: gl.getUniformLocation(bulletShaderProgram,"uTime"),
-			x0: gl.getUniformLocation(bulletShaderProgram,"uX0"),
-			v1: gl.getUniformLocation(bulletShaderProgram,"uV1"),
-			a1: gl.getUniformLocation(bulletShaderProgram,"uA1"),
-			vStopRot: gl.getUniformLocation(bulletShaderProgram,"uVStopRot"),
-			v2: gl.getUniformLocation(bulletShaderProgram,"uV2"),
-			a2: gl.getUniformLocation(bulletShaderProgram,"uA2"),
-		},
-		meProgram: meShaderProgram,
-		attribLocationsM: {
-			vertexPosition : gl.getAttribLocation(meShaderProgram,"aVertexPosition"),
-			vertexColor: gl.getAttribLocation(meShaderProgram,"aVertexColor"),
-		},
-		uniformLocationsM: {
-			modelViewMatrix: gl.getUniformLocation(meShaderProgram,"uModelViewMatrix"),
-			parallelMatrix: gl.getUniformLocation(meShaderProgram,"uParallelMatrix"),
-		},
-	};
-
 	// set primitive list of bullets
 	const triangle = getTriangle();
 	const rect = getRectangle(2.0,2.0);
@@ -51,8 +17,8 @@ function main(){
 	const move1 = moveConstantAcceleration(0.8,[0.0,0.0],[0.15,0]);
 	let moves = [move1,move0];
 
-	let bullets = new Bullets(primitivesData,primitivesBuffers,moves);
-	let shots = new Shots();
+	let bullets = new Bullets(gl,primitivesData,primitivesBuffers,moves);
+	let shots = new Shots(gl);
 
 	let then = 0.0;
 
@@ -64,34 +30,42 @@ function main(){
 
 	let modelViewMatrix = getModelViewMatrix(gl);
 
+	const soundPlayer = new SoundPlayer();
+
 	let objData = {
 		bullets: bullets,
 		shots: shots,
 		me: me,
 		enemies: enemies,
 		modelViewMatrix: modelViewMatrix,
+		soundPlayer: soundPlayer,
 	};
 
-	const music = new Music("sound/theme1.mp3");
 
 	let state = 0; // 0: wait, 1:shooting, 2:gameover
 	function render(now){
 		now *= 0.001;
 		then = now;
 
+		shots.updatePosition(now,enemies);
 		bullets.garbageCollection(now);
-		witch.generateBullets(gl,now,bullets);
+		witch.generateBullets(gl,now,objData);
+
+		// TODO hit damege to witch and something
+		const collisionIdxArray = witch.collisionDetect(objData);
+		shots.deleteByIdxArray(collisionIdxArray);
+
 		inputs.update(me);
 		if(inputs.shot){
 			me.shot(now,shots);
 		}
 
-		drawSceneSTG(gl,programInfo,objData,now);
+		drawSceneSTG(gl,objData,now);
 		let isDetected = me.collisionDetected(objData,now);
 		if(isDetected){
 			state = 2;
-			music.stop();
-			drawTalk("魔女","ゲームオーバーですよー<br>もっと真面目にやれー");
+			soundPlayer.stopBGM();
+			drawTalk("魔女","ゲームオーバーだよ☆<br>");
 		//	clearText();
 		}
 		else{
@@ -100,7 +74,7 @@ function main(){
 	}
 	document.addEventListener('keyup', (event) => {
 		state = 1;
-		music.start();
+		soundPlayer.startBGM();
 		requestAnimationFrame(render);
 	},{once: true});
 }

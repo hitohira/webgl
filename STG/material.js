@@ -1,30 +1,3 @@
-class Bullets{
-	constructor(primitives,buffers,moves){
-		this.primitives = primitives;
-		this.buffers = buffers;
-		this.moves = moves;
-		this.instance = Array(moves.length);
-		for(let i = 0; i < moves.length; i++){
-			this.instance[i] = [];
-		}
-		this.timer = 0.0;
-	}
-
-	// TODO 処理が重いようならQueueを使うなりして削除のコストを下げるべし
-	garbageCollection(now){
-		if(now - this.timer < 1.0){
-			return;
-		}
-		for(let i = 0; i < this.instance.length; i++){
-			for(let j = 0; j < this.instance[i].length; j++){
-				if(this.instance[i][j].lifetime < now - this.instance[i][j].start){
-					this.instance[i].splice(0,j);
-				}
-			}
-		}
-	}
-}
-
 // generation
 /*
  * vec3 aTime; 初期停止時間の終わる時刻、第一運動時間の終わる時刻、一時停止時間の終わる時刻
@@ -89,7 +62,7 @@ function setBullet(start,x0,lifetime){
 // color : vertex color(vec4)
 // index : for drawElements
 // outer : for collision detection, outer vertex
-// size : circle whose radius is "size" contains this primitve
+// size : circle whose radius is "size" contains this primitive
 function getRectangle(width,height){
 	let w = width / 2.0;
 	let h = height / 2.0;
@@ -230,18 +203,18 @@ function getShot(){
 			 0.0, h, 0.0,
 		],
 		color: [
-			1.0,1.0,1.0,0.7,
-			1.0,1.0,1.0,0.7,
-			1.0,1.0,1.0,0.7,
-			1.0,1.0,1.0,0.7,
-			1.0,0.0,0.0,0.7,
-			1.0,0.0,0.0,0.7,
-			1.0,0.0,0.0,0.7,
-			1.0,0.0,0.0,0.7,
-			1.0,0.0,0.0,0.7,
-			1.0,0.0,0.0,0.7,
-			1.0,0.0,0.0,0.7,
-			1.0,0.0,0.0,0.7,
+			1.0,1.0,1.0,0.5,
+			1.0,1.0,1.0,0.5,
+			1.0,1.0,1.0,0.5,
+			1.0,1.0,1.0,0.5,
+			1.0,0.0,0.0,0.5,
+			1.0,0.0,0.0,0.5,
+			1.0,0.0,0.0,0.5,
+			1.0,0.0,0.0,0.5,
+			1.0,0.0,0.0,0.5,
+			1.0,0.0,0.0,0.5,
+			1.0,0.0,0.0,0.5,
+			1.0,0.0,0.0,0.5,
 		],
 		index: [
 			0,1,2,

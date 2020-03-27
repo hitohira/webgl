@@ -17,24 +17,32 @@ function getParallelMatrix(pos){
 		 pos[0], pos[1], 0.0, 1.0,
 	];
 }
-
-function setUniformMoveB(gl,programInfo,move){
-	gl.uniform3fv(programInfo.uniformLocationsB.time,move.time);
-	gl.uniform2fv(programInfo.uniformLocationsB.v1,move.v1);
-	gl.uniform2fv(programInfo.uniformLocationsB.a1,move.a1);
-	gl.uniform1f(programInfo.uniformLocationsB.vStopRot,move.vStopRot);
-	gl.uniform2fv(programInfo.uniformLocationsB.v2,move.v2);
-	gl.uniform2fv(programInfo.uniformLocationsB.a2,move.a2);
+function getRotationMatrix(theta){
+	return [
+		 Math.cos(theta), Math.sin(theta), 0.0, 0.0,
+		-Math.sin(theta), Math.cos(theta), 0.0, 0.0,
+					      	0.0,            0.0, 1.0, 0.0,
+				      		0.0,            0.0, 0.0, 1.0
+	];
 }
-function setUniformBullet(gl,programInfo,bullet){
-	gl.uniform1f(programInfo.uniformLocationsB.start,bullet.start);
-	gl.uniform4fv(programInfo.uniformLocationsB.x0,bullet.x0);
+function setUniformMoveB(gl,uniformL,move){
+	gl.uniform3fv(uniformL.time,move.time);
+	gl.uniform2fv(uniformL.v1,move.v1);
+	gl.uniform2fv(uniformL.a1,move.a1);
+	gl.uniform1f(uniformL.vStopRot,move.vStopRot);
+	gl.uniform2fv(uniformL.v2,move.v2);
+	gl.uniform2fv(uniformL.a2,move.a2);
+}
+function setUniformBullet(gl,uniformL,bullet){
+	gl.uniform1f(uniformL.start,bullet.start);
+	gl.uniform4fv(uniformL.x0,bullet.x0);
 }
 
-function drawSceneSTG(gl,programInfo,objData,elasped){
+function drawSceneSTG(gl,objData,elasped){
 	const bullets = objData.bullets;
 	const me = objData.me;
 	const enemies = objData.enemies;
+	const shots = objData.shots;
 	const modelViewMatrix = objData.modelViewMatrix;
 
 	gl.clearColor(0.0,0.0,0.0,1.0);
@@ -46,28 +54,10 @@ function drawSceneSTG(gl,programInfo,objData,elasped){
 	gl.enable(gl.BLEND);
 	// gl.disable(gl.BLEND);
 
-	// draw bullets
-	gl.useProgram(programInfo.bulletProgram);
-	setUniformModelViewMatrix(gl,modelViewMatrix,programInfo.uniformLocationsB);
-	gl.uniform1f(programInfo.uniformLocationsB.elasped,elasped);
-	for(let i = 0; i < bullets.instance.length; i++){
-		enableBuffers(gl,programInfo.attribLocationsB,programInfo.uniformLocationsB,bullets.buffers[i]);
-		setUniformMoveB(gl,programInfo,bullets.moves[i]);
-		for(let j = 0; j < bullets.instance[i].length; j++){
-			setUniformBullet(gl,programInfo,bullets.instance[i][j]);
-			gl.drawElements(gl.TRIANGLES,bullets.buffers[i].length,gl.UNSIGNED_SHORT,0);
-		}
-	}
+	bullets.draw(gl,modelViewMatrix,elasped);
+	shots.draw(gl,modelViewMatrix,elasped);
+	me.draw(gl,modelViewMatrix);
 
-	// draw me
-	let meParallelMatrix = getParallelMatrix(me.pos()); //TODO
-	gl.useProgram(programInfo.meProgram);
-	enableBuffers(gl,programInfo.attribLocationsM,programInfo.uniformLocationsM,me.buffers);
-	setUniformModelViewMatrix(gl,modelViewMatrix,programInfo.uniformLocationsM);
-	setUniformParallelMatrix(gl,meParallelMatrix,programInfo.uniformLocationsM);
-	gl.drawElements(gl.TRIANGLES,me.buffers.length,gl.UNSIGNED_SHORT,0);
-
-	// draw enemies
 	for(let i = 0; i < enemies.length; i++){
 		const enemy = enemies[i];
 		enemies[i].draw(gl,modelViewMatrix);

@@ -85,18 +85,22 @@ function addUIEvent(me,inputs){
   });
 }
 
-class Music{
-  constructor(mp3file){
-    this.music = new Audio(mp3file);
-    this.music.addEventListener("ended",function(){
-      this.music.currentTime = 0;
+class SoundPlayer{
+  constructor(){
+    this.bgm = new Audio("sound/BGM/theme1.mp3");
+    this.bgm.addEventListener("ended",function(){
+      this.bgm.currentTime = 0;
       music.play();
     },false);
+    this.effect = new Audio("sound/effect/short1.mp3");
   }
-  start(){
-    this.music.play();
+  startBGM(){
+    this.bgm.play();
   }
-  stop(){
-    this.music.pause();
+  stopBGM(){
+    this.bgm.pause();
+  }
+  playEffect(){
+    this.effect.play();
   }
 }

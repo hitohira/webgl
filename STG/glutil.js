@@ -92,12 +92,13 @@ function vsCode2(){
 		attribute vec4 aVertexColor;
 		uniform mat4 uModelViewMatrix;
 		uniform mat4 uParallelMatrix;
+		uniform mat4 uRotationMatrix;
 
 		varying lowp vec4 vColor;
 
 		void main(){
 			vec4 interPosition = vec4(aVertexPosition,1.0);
-			gl_Position = uParallelMatrix * uModelViewMatrix * interPosition;
+			gl_Position = uParallelMatrix * uModelViewMatrix * uRotationMatrix * interPosition;
 			vColor = aVertexColor;
 		}
 	`;
@@ -110,6 +111,39 @@ function fsCode(){
 			gl_FragColor = vColor;
 		}
 	`;
+}
+function initVsAttribL(gl,shaderProgram){
+	return {
+		vertexPosition : gl.getAttribLocation(shaderProgram,"aVertexPosition"),
+		vertexColor: gl.getAttribLocation(shaderProgram,"aVertexColor"),
+	};
+}
+function initVsUniformL(gl,shaderProgram){
+	return {
+		modelViewMatrix : gl.getUniformLocation(shaderProgram,"uModelViewMatrix"),
+		elasped: gl.getUniformLocation(shaderProgram,"uElasped"),
+		start: gl.getUniformLocation(shaderProgram,"uStart"),
+		time: gl.getUniformLocation(shaderProgram,"uTime"),
+		x0: gl.getUniformLocation(shaderProgram,"uX0"),
+		v1: gl.getUniformLocation(shaderProgram,"uV1"),
+		a1: gl.getUniformLocation(shaderProgram,"uA1"),
+		vStopRot: gl.getUniformLocation(shaderProgram,"uVStopRot"),
+		v2: gl.getUniformLocation(shaderProgram,"uV2"),
+		a2: gl.getUniformLocation(shaderProgram,"uA2"),
+	}
+}
+function initVs2AttribL(gl,shaderProgram){
+	return {
+		vertexPosition : gl.getAttribLocation(shaderProgram,"aVertexPosition"),
+		vertexColor: gl.getAttribLocation(shaderProgram,"aVertexColor"),
+	};
+}
+function initVs2UniformL(gl,shaderProgram){
+	return {
+		modelViewMatrix: gl.getUniformLocation(shaderProgram,"uModelViewMatrix"),
+		parallelMatrix: gl.getUniformLocation(shaderProgram,"uParallelMatrix"),
+		rotationMatrix: gl.getUniformLocation(shaderProgram,"uRotationMatrix"),
+	};
 }
 
 function initCanvas(){
@@ -219,6 +253,9 @@ function setUniformModelViewMatrix(gl,modelViewMatrix,uniformL){
 function setUniformParallelMatrix(gl,parallelMatrix,uniformL){
 	gl.uniformMatrix4fv(uniformL.parallelMatrix,false,parallelMatrix);
 }
+function setUniformRotationMatrix(gl,rotationMatrix,uniformL){
+	gl.uniformMatrix4fv(uniformL.rotationMatrix,false,rotationMatrix);
+}
 ////////////////
 // for Texture
 ////////////////
@@ -287,12 +324,13 @@ function fsCodeTex(){
 	`;
 }
 function textureBoard(){
+	const size = 6.0;
 	return {
 		position : [
-			-6.0, 6.0, 0.0,
-			 6.0, 6.0, 0.0,
-			-6.0,-6.0, 0.0,
-			 6.0,-6.0, 0.0,
+			-size, size, 0.0,
+			 size, size, 0.0,
+			-size,-size, 0.0,
+			 size,-size, 0.0,
 		],
 		color : [
 			1.0,1.0,1.0,1.0,
@@ -310,6 +348,7 @@ function textureBoard(){
 			0.0,1.0,
 			1.0,1.0,
 		],
+		size: size * 0.7,
 	};
 }
 function textureAttribLocations(gl,shaderProgram){
