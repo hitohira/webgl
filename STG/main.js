@@ -72,7 +72,9 @@ function main(){
 		modelViewMatrix: modelViewMatrix,
 	};
 
-	let state = 0; // 0:shooting, 1:gameover
+	const music = new Music("sound/theme1.mp3");
+
+	let state = 0; // 0: wait, 1:shooting, 2:gameover
 	function render(now){
 		now *= 0.001;
 		then = now;
@@ -85,9 +87,10 @@ function main(){
 		}
 
 		drawSceneSTG(gl,programInfo,objData,now);
-		let isDetected = collisionDetection(objData,now);
+		let isDetected = me.collisionDetected(objData,now);
 		if(isDetected){
-			state = 1;
+			state = 2;
+			music.stop();
 			drawTalk("魔女","ゲームオーバーですよー<br>もっと真面目にやれー");
 		//	clearText();
 		}
@@ -95,6 +98,9 @@ function main(){
 			requestAnimationFrame(render);
 		}
 	}
-
-	requestAnimationFrame(render);
+	document.addEventListener('keyup', (event) => {
+		state = 1;
+		music.start();
+		requestAnimationFrame(render);
+	},{once: true});
 }

@@ -97,22 +97,30 @@ class ShotGenerator{
 }
 class Shots{
   constructor(){
-    this.straight = [];
-    this.tracking = [];
-    this.speed = 0.1;
+    this.primitive =
+    this.straight = {
+      pos: [],
+      primitive: getShot(),
+      speed: 0.1,
+    };
+    this.tracking = {
+      pos: [],
+      primitive: getShot(),
+      speed: 0.1,
+    };
   }
   updatePosition(now,enemies){
-    for(let i = 0; i < this.straight.length; i++){
-      this.straight[i].pos[1] -= this.speed;
+    for(let i = 0; i < this.straight.pos.length; i++){
+      this.straight.pos[i][1] -= this.straight.speed;
     }
-    for(let i = 0; i < this.tracking.length; i++){
-      let myPos = this.tracking[i].pos;
-      let ePos = findNearEnemy(this.tracking[i].pos,enemies);
+    for(let i = 0; i < this.tracking.pos.length; i++){
+      let myPos = this.tracking.pos[i];
+      let ePos = findNearEnemy(myPos,enemies);
       let dir = [ePos[0] - mypos[0],ePos[1] - mypos[0]];
       let r = norm(dir);
       let normDir = [dir[0]/r,dir[1]/r];
-      myPos[0] += normDir[0];
-      mypos[1] += normDir[1];
+      myPos[0] += normDir[0] * this.tracking.speed;
+      mypos[1] += normDir[1] * this.tracking.speed;
     }
   }
   findNearEnemy(pos,enemies){
@@ -166,5 +174,40 @@ class Me{
     for(let i = 0; i < shotGenerators.length; i++){
       shotGenerators[i].generateShot(now,this.pos(),shots);
     }
+  }
+
+  collisionDetected(objData,elasped){
+  	const bullets = objData.bullets;
+  	const modelViewMatrix = objData.modelViewMatrix;
+
+  	const posMe = this.pos();
+
+  	//for all bullets
+  	for(let i = 0; i < bullets.instance.length; i++){
+  		const primitive = bullets.primitives[i];
+  		const move = bullets.moves[i];
+  		for(let j = 0; j < bullets.instance[i].length; j++){
+    		const centerInfo = getBulletCenterInfo(move,bullets.instance[i][j],elasped);
+    		const posBulletCenter = centerInfo.center;
+    		const theta = centerInfo.theta;
+
+  			// is near enough to check in detail?
+  			if(distance(posMe,posBulletCenter) > modelViewMatrix[0] * (this.r+primitive.size)){
+  				continue;
+  			}
+  			// calculate outer vertex position(relative to center pos)
+  			const vnum = primitive.outer.length;
+  			const posArray = getModifiedPrimitivePos(primitive,theta,modelViewMatrix);
+  			const posM = [posMe[0]-posBulletCenter[0],posMe[1]-posBulletCenter[1]];
+  			// compare posArray and posM(not PosMe!)
+  			if(isInner(vnum,posArray,posM)){
+  				return true;
+  			}
+  			if(isTouched(vnum,posArray,posM,modelViewMatrix[0] * this.r)){
+  				return true;
+  			}
+  		}
+  	}
+  	return false;
   }
 }

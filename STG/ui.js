@@ -84,3 +84,19 @@ function addUIEvent(me,inputs){
     }
   });
 }
+
+class Music{
+  constructor(mp3file){
+    this.music = new Audio(mp3file);
+    this.music.addEventListener("ended",function(){
+      this.music.currentTime = 0;
+      music.play();
+    },false);
+  }
+  start(){
+    this.music.play();
+  }
+  stop(){
+    this.music.pause();
+  }
+}
