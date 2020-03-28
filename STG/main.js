@@ -9,13 +9,14 @@ function main(){
 	const rect = getRectangle(2.0,2.0);
 	const triangleBuffers = initBuffers(gl,triangle);
 	const rectangleBuffers = initBuffers(gl,rect);
-	let primitivesBuffers = [rectangleBuffers,triangleBuffers];
-	let primitivesData = [rect,triangle];
+	let primitivesBuffers = [rectangleBuffers,triangleBuffers,triangleBuffers];
+	let primitivesData = [rect,triangle,triangle];
 
 	// set movement list of bullets
-	const move0 = moveConstantVelocity(0.3,[0.25,0]);
-	const move1 = moveConstantAcceleration(0.8,[0.0,0.0],[0.15,0]);
-	let moves = [move1,move0];
+	const move0 = moveConstantAcceleration(0.8,[0.0,0.0],[0.15,0]);
+	const move1 = moveConstantVelocity(0.3,[0.25,0]);
+	const move2 = moveRaw([0.3,1.4,1.6],[0.25,0],[0.0,0.0],Math.PI,[0.1,0.0],[0.15,0.0]);
+	let moves = [move0,move1,move2];
 
 	let bullets = new Bullets(gl,primitivesData,primitivesBuffers,moves);
 	let shots = new Shots(gl);

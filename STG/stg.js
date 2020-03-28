@@ -73,11 +73,15 @@ function getBulletCenterInfo(move,instance,elasped){
 	let posBulletCenter = [bullet.x0[0],bullet.x0[1]];
 	let theta = bullet.x0[3];
 	if(existing_time > time[0]){
-		const dt = existing_time > time[1] ? time[1] - time[0] : existing_time - time[1];
+		const dt = existing_time > time[1] ? time[1] - time[0] : existing_time - time[0];
 		theta += move.v1[1]*dt + 0.5*move.a1[1]*dt*dt;
 		const r = move.v1[0] + 0.5*move.a1[0]*dt;
 		posBulletCenter[0] +=  r * Math.sin(theta) * dt;
 		posBulletCenter[1] += -r * Math.cos(theta) * dt;
+	}
+	if(existing_time > time[1]){
+		const dt = existing_time > time[2] ? time[2] - time[1] : existing_time - time[1];
+		theta += move.vStopRot * dt;
 	}
 	if(existing_time > time[2]){
 		const dt = existing_time - time[2];

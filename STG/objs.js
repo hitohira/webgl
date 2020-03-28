@@ -85,6 +85,9 @@ class Witch{
       this.thetaOfs += Math.PI / 12.0;
       Array.prototype.push.apply(globalBullets.instance[1],bullets);
       objData.soundPlayer.playEffect();
+
+			Array.prototype.push.apply(globalBullets.instance[2],bullets);
+
     }
 
     if(now - this.timer2 > 0.07){

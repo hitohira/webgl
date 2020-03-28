@@ -57,7 +57,7 @@ function vsCode(){
 			);
 
 			if(existing_time > uTime[0]){
-				dt = existing_time > uTime[1] ? uTime[1] - uTime[0] : existing_time - uTime[1];
+				dt = existing_time > uTime[1] ? uTime[1] - uTime[0] : existing_time - uTime[0];
 				theta += uV1[1]*dt + 0.5*uA1[1]*dt*dt;
 				float r = uV1[0] + 0.5*uA1[0]*dt;
 				parallelMatrix[3][0] +=  r * sin(theta) * dt;
@@ -65,7 +65,8 @@ function vsCode(){
 
 			}
 			if(existing_time > uTime[1]){
-
+				dt = existing_time > uTime[2] ? uTime[2] - uTime[1] : existing_time - uTime[1];
+				theta += uVStopRot * dt;
 			}
 			if(existing_time > uTime[2]){
 				dt = existing_time - uTime[2];
