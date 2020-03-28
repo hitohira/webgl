@@ -54,8 +54,8 @@ function drawSceneSTG(gl,objData,elasped){
 	gl.enable(gl.BLEND);
 	// gl.disable(gl.BLEND);
 
-	bullets.draw(gl,modelViewMatrix,elasped);
-	shots.draw(gl,modelViewMatrix,elasped);
+	bullets.draw(gl,modelViewMatrix);
+	shots.draw(gl,modelViewMatrix);
 	me.draw(gl,modelViewMatrix);
 
 	for(let i = 0; i < enemies.length; i++){
@@ -63,7 +63,7 @@ function drawSceneSTG(gl,objData,elasped){
 		enemies[i].draw(gl,modelViewMatrix);
 	}
 }
-
+/*
 function getBulletCenterInfo(move,instance,elasped){
 	const bullet = instance;
 	const existing_time = elasped - bullet.start;
@@ -95,6 +95,7 @@ function getBulletCenterInfo(move,instance,elasped){
 		theta: theta,
 	};
 }
+*/
 function getModifiedPrimitivePos(primitive,theta,modelViewMatrix){
 	let posArray = [];
 	const vnum = primitive.outer.length;

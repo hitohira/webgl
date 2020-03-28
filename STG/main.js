@@ -14,8 +14,8 @@ function main(){
 
 	// set movement list of bullets
 	const move0 = moveConstantAcceleration(0.8,[0.0,0.0],[0.15,0]);
-	const move1 = moveConstantVelocity(0.3,[0.25,0]);
-	const move2 = moveRaw([0.3,1.4,1.6],[0.25,0],[0.0,0.0],Math.PI,[0.1,0.0],[0.15,0.0]);
+	const move1 = moveConstantVelocity(0.3,[0.1,0]);
+	const move2 = moveRaw([0.3,1.4,1.6],[0.25,0],[0.0,0.0],Math.PI/2.0,[0.1,0.0],[0.05,0.0]);
 	let moves = [move0,move1,move2];
 
 	let bullets = new Bullets(gl,primitivesData,primitivesBuffers,moves);
@@ -48,8 +48,9 @@ function main(){
 		now *= 0.001;
 		then = now;
 
-		shots.updatePosition(now,enemies);
+		shots.updatePosition(now,objData);
 		bullets.garbageCollection(now);
+		bullets.updatePosition(now,objData);
 		witch.generateBullets(gl,now,objData);
 
 		// TODO hit damege to witch and something

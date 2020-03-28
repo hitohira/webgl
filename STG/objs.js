@@ -5,11 +5,11 @@ class Bullets{
 	constructor(gl,primitives,buffers,moves){
 		this.primitives = primitives;
 		this.buffers = buffers;
-    const vsSource = vsCode();
+    const vsSource2 = vsCode2();
     const fsSource = fsCode();
-    this.shader = initShaderProgram(gl,vsSource,fsSource);
-    this.attribL = initVsAttribL(gl,this.shader);
-    this.uniformL = initVsUniformL(gl,this.shader);
+    this.shader = initShaderProgram(gl,vsSource2,fsSource);
+    this.attribL = initVs2AttribL(gl,this.shader);
+    this.uniformL = initVs2UniformL(gl,this.shader);
 		this.moves = moves;
 		this.instance = Array(moves.length);
 		for(let i = 0; i < moves.length; i++){
@@ -17,15 +17,50 @@ class Bullets{
 		}
 		this.timer = 0.0;
 	}
-  draw(gl,modelViewMatrix,elasped){
+	//TODO collision detection change
+	updatePosition(elasped,objData){
+		const modelViewMatrix = objData.modelViewMatrix;
+		for(let i = 0; i < this.instance.length; i++){
+			const move = this.moves[i];
+			const time = move.time;
+			for(let j = 0; j < this.instance[i].length; j++){
+				let bullet = this.instance[i][j];
+				const existing_time = elasped - bullet.start;
+				let theta = bullet.pos[2];
+				if(existing_time > time[2]){
+					const dt = existing_time - time[2];
+					theta += move.v2[1]*dt + 0.5*move.a2[1]*dt*dt;
+					const r = move.v2[0] + 0.5*move.a2[0]*dt;
+					bullet.pos[0] +=  r * Math.sin(theta) * dt * modelViewMatrix[0];
+					bullet.pos[1] += -r * Math.cos(theta) * dt * modelViewMatrix[5];
+					bullet.pos[2] = theta;
+				}
+				else if(existing_time > time[1]){
+					const dt = existing_time > time[2] ? time[2] - time[1] : existing_time - time[1];
+					bullet.pos[2] += move.vStopRot * dt;
+				}
+				else if(existing_time > time[0]){
+					const dt = existing_time > time[1] ? time[1] - time[0] : existing_time - time[0];
+					theta += move.v1[1]*dt + 0.5*move.a1[1]*dt*dt;
+					const r = move.v1[0] + 0.5*move.a1[0]*dt;
+					bullet.pos[0] +=  r * Math.sin(theta) * dt * modelViewMatrix[0];
+					bullet.pos[1] += -r * Math.cos(theta) * dt * modelViewMatrix[5];
+					bullet.pos[2] = theta;
+				}
+			}
+		}
+	}
+  draw(gl,modelViewMatrix){
     gl.useProgram(this.shader);
     setUniformModelViewMatrix(gl,modelViewMatrix,this.uniformL);
-    gl.uniform1f(this.uniformL.elasped,elasped);
     for(let i = 0; i < this.instance.length; i++){
       enableBuffers(gl,this.attribL,this.uniformL,this.buffers[i]);
-      setUniformMoveB(gl,this.uniformL,this.moves[i]);
       for(let j = 0; j < this.instance[i].length; j++){
-        setUniformBullet(gl,this.uniformL,this.instance[i][j]);
+				const bullet = this.instance[i][j];
+				const parallelMatrix = getParallelMatrix(bullet.pos);
+				const rotationMatrix = getRotationMatrix(bullet.pos[2]);
+				setUniformParallelMatrix(gl,parallelMatrix,this.uniformL);
+				setUniformRotationMatrix(gl,rotationMatrix,this.uniformL);
         gl.drawElements(gl.TRIANGLES,this.buffers[i].length,gl.UNSIGNED_SHORT,0);
       }
     }
@@ -75,18 +110,21 @@ class Witch{
     if(now - this.timer > 1.0){
       this.timer = now;
       const r = 0.2;
-      const num = 32;
+      const num = 16;
       let bullets = [];
+			let bullets2 = [];
       for(let i = 0; i < num; i++){
         const theta = 2.0 * Math.PI / num * i + this.thetaOfs;
-        const b = setBullet(now,[this.x+r*Math.sin(theta),this.y-r*aspect*Math.cos(theta),0.0,theta],15.0);
+        const b = setBullet(now,[this.x+r*Math.sin(theta),this.y-r*aspect*Math.cos(theta),theta],15.0);
+				const b2 = setBullet(now,[this.x+r*Math.sin(theta),this.y-r*aspect*Math.cos(theta),theta],15.0);
         bullets.push(b);
+				bullets2.push(b2);
       }
       this.thetaOfs += Math.PI / 12.0;
       Array.prototype.push.apply(globalBullets.instance[1],bullets);
       objData.soundPlayer.playEffect();
 
-			Array.prototype.push.apply(globalBullets.instance[2],bullets);
+			Array.prototype.push.apply(globalBullets.instance[2],bullets2);
 
     }
 
@@ -96,7 +134,7 @@ class Witch{
       const num2 = 23;
       const theta = 2.0 * Math.PI / num2 * this.rotCount;
       this.rotCount = (this.rotCount + 1) % num2;
-      const b = setBullet(now,[this.x+r2*Math.sin(theta),this.y-r2*aspect*Math.cos(theta),0.0,theta],10.0);
+      const b = setBullet(now,[this.x+r2*Math.sin(theta),this.y-r2*aspect*Math.cos(theta),theta],10.0);
       globalBullets.instance[0].push(b);
       objData.soundPlayer.playEffect();
     }
@@ -192,7 +230,7 @@ class Shots{
   constructor(gl){
     this.straight = [];
     this.tracking = [];
-    this.speed = 0.01;
+    this.speed = 1.0;
 
     this.primitive = getShot();
     this.buffers = initBuffers(gl,this.primitive);
@@ -202,12 +240,14 @@ class Shots{
     this.attribL = initVs2AttribL(gl,this.shader);
     this.uniformL = initVs2UniformL(gl,this.shader);
   }
-  updatePosition(now,enemies){
-    // TODO delete if lifetimeover or collision to enemies
+  updatePosition(now,objData){
+		const enemies = objData.enemies;
+		const modelViewMatrix = objData.modelViewMatrix;
+
     this.garbageCollection(now);
-    //
+
     for(let i = 0; i < this.straight.length; i++){
-      this.straight[i].pos[1] += this.speed;
+      this.straight[i].pos[1] += this.speed * modelViewMatrix[5];
     }
     for(let i = 0; i < this.tracking.length; i++){
       let myPos = this.tracking[i].pos;
@@ -215,8 +255,8 @@ class Shots{
       let dir = [ePos[0] - myPos[0],ePos[1] - myPos[1]];
       let r = norm(dir);
       let normDir = [dir[0]/r,dir[1]/r];
-      myPos[0] += normDir[0] * this.speed;
-      myPos[1] += normDir[1] * this.speed;
+      myPos[0] += normDir[0] * this.speed * modelViewMatrix[0];
+      myPos[1] += normDir[1] * this.speed * modelViewMatrix[5];
       const asinv = Math.asin(normDir[0]);
       const sgn = asinv >= 0.0 ? 1.0 : -1.0;
       myPos[2] = normDir[1] <= 0.0 ? asinv : Math.PI - asinv;
@@ -256,11 +296,10 @@ class Shots{
     }
     return minPos;
   }
-  draw(gl,modelViewMatrix,elasped){
+  draw(gl,modelViewMatrix){
     gl.useProgram(this.shader);
     enableBuffers(gl,this.attribL,this.uniformL,this.buffers);
     setUniformModelViewMatrix(gl,modelViewMatrix,this.uniformL);
-    gl.uniform1f(this.uniformL.elasped,elasped);
     for(let i = 0; i < this.straight.length; i++){
       const parallelMatrix = getParallelMatrix(this.straight[i].pos);
       const rotationMatrix = getRotationMatrix(this.straight[i].pos[2]);
@@ -341,9 +380,9 @@ class Me{
   		const primitive = bullets.primitives[i];
   		const move = bullets.moves[i];
   		for(let j = 0; j < bullets.instance[i].length; j++){
-    		const centerInfo = getBulletCenterInfo(move,bullets.instance[i][j],elasped);
-    		const posBulletCenter = centerInfo.center;
-    		const theta = centerInfo.theta;
+    		const bulletPos = bullets.instance[i][j].pos;
+				const posBulletCenter = [bulletPos[0],bulletPos[1]];
+    		const theta = bulletPos[2];
 
   			// is near enough to check in detail?
   			if(distance(posMe,posBulletCenter) > modelViewMatrix[0] * (this.r+primitive.size)){

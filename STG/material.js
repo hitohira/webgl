@@ -49,11 +49,11 @@ function moveConstantVelocityW(time,v1,vStopRot,v2){
 	};
 }
 
-// x0 - [x,y,z,theta]
+// x0 - [x,y,theta]
 function setBullet(start,x0,lifetime){
 	return {
 		start: start,
-		x0: x0,
+		pos: x0,
 		lifetime: lifetime,
 	};
 }
