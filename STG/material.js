@@ -1,60 +1,44 @@
 // generation
 /*
- * vec3 aTime; 初期停止時間の終わる時刻、第一運動時間の終わる時刻、一時停止時間の終わる時刻
- * vec4 aX0; 初期位置x,y,z,θ
- * vec2 aV1; 自身の向き方向に対する初期速度v,ω
- * vec2 aA1; 自身の向き方向に対する加速度a,γ
- * float aVStopRot; 一時停止中の角速度
- * vec2 aV2; 一時停止後の初期速度
- * vec2 aA2; 一時停止後の加速度
+ * float aStopTime; 初期停止時間の終わる時刻
+ * float alifeTime: 自身が消える時刻
+ * vec2 aV; 自身の向き方向に対する初期速度v,ω
+ * vec2 aA; 自身の向き方向に対する加速度a,γ
+ * [[moveIndex,theta],[...],...] next: 自身が消えた後に発生するもの
  */
-function moveRaw(time,v1,a1,vStopRot,v2,a2){
+function moveRaw(stopTime,lifeTime,v,a,next){
 	return {
-		time: time,
-		v1: v1,
-		a1: a1,
-		vStopRot: vStopRot,
-		v2: v2,
-		a2: a2,
+		stopTime: stopTime,
+		lifeTime: lifeTime,
+		v: v,
+		a: a,
+		next: next,
 	};
 }
-function moveConstantVelocity(t0,v1){
+function moveConstantVelocity(t0,v){
 	return {
-		time: [t0, t0, t0,],
-		v1: [0.0,0.0],
-		a1: [0.0,0.0],
-		vStopRot: 0.0,
-		v2: v1,
-		a2: [0.0,0.0],
+		stopTime: t0,
+		lifeTime: 10.0,
+		v: v,
+		a: [0.0,0,0],
+		next: [],
 	};
 }
-function moveConstantAcceleration(t0,v1,a1){
+function moveConstantAcceleration(t0,v,a){
 	return {
-		time: [t0, t0, t0,],
-		v1: [0.0,0.0],
-		a1: [0.0,0.0],
-		vStopRot: 0.0,
-		v2: v1,
-		a2: a1,
-	};
-}
-function moveConstantVelocityW(time,v1,vStopRot,v2){
-	return {
-		time: time,
-		v1: v1,
-		a1: a1,
-		vStopRot: vStopRot,
-		v2: v2,
-		a2: [0.0,0.0],
+		stopTime: t0,
+		lifeTime: 10.0,
+		v: v,
+		a: a,
+		next: [],
 	};
 }
 
 // x0 - [x,y,theta]
-function setBullet(start,x0,lifetime){
+function setBullet(start,x0){
 	return {
 		start: start,
 		pos: x0,
-		lifetime: lifetime,
 	};
 }
 // primitive

@@ -22,31 +22,32 @@ class Bullets{
 		const modelViewMatrix = objData.modelViewMatrix;
 		for(let i = 0; i < this.instance.length; i++){
 			const move = this.moves[i];
-			const time = move.time;
+			const stopTime = move.stopTime;
+			const lifeTime = move.lifeTime;
+			let deleteIdxArray = [];
 			for(let j = 0; j < this.instance[i].length; j++){
 				let bullet = this.instance[i][j];
 				const existing_time = elasped - bullet.start;
 				let theta = bullet.pos[2];
-				if(existing_time > time[2]){
-					const dt = existing_time - time[2];
-					theta += move.v2[1]*dt + 0.5*move.a2[1]*dt*dt;
-					const r = move.v2[0] + 0.5*move.a2[0]*dt;
+
+				if(existing_time > lifeTime){
+					deleteIdxArray.push(j);
+					for(let k = 0; k < move.next.length; k++){
+						const rotatedPos = [bullet.pos[0],bullet.pos[1],bullet.pos[2]+move.next[k][1]];
+						this.instance[move.next[k][0]].push(setBullet(elasped,rotatedPos));
+					}
+				}
+				else if(existing_time > stopTime){
+					const dt = existing_time - stopTime;
+					theta += move.v[1]*dt + 0.5*move.a[1]*dt*dt;
+					const r = move.v[0] + 0.5*move.a[0]*dt;
 					bullet.pos[0] +=  r * Math.sin(theta) * dt * modelViewMatrix[0];
 					bullet.pos[1] += -r * Math.cos(theta) * dt * modelViewMatrix[5];
 					bullet.pos[2] = theta;
 				}
-				else if(existing_time > time[1]){
-					const dt = existing_time > time[2] ? time[2] - time[1] : existing_time - time[1];
-					bullet.pos[2] += move.vStopRot * dt;
-				}
-				else if(existing_time > time[0]){
-					const dt = existing_time > time[1] ? time[1] - time[0] : existing_time - time[0];
-					theta += move.v1[1]*dt + 0.5*move.a1[1]*dt*dt;
-					const r = move.v1[0] + 0.5*move.a1[0]*dt;
-					bullet.pos[0] +=  r * Math.sin(theta) * dt * modelViewMatrix[0];
-					bullet.pos[1] += -r * Math.cos(theta) * dt * modelViewMatrix[5];
-					bullet.pos[2] = theta;
-				}
+			}
+			for(let j = deleteIdxArray.length - 1;j >= 0; j--){
+				this.instance[i].splice(deleteIdxArray[j],1);
 			}
 		}
 	}
@@ -65,19 +66,6 @@ class Bullets{
       }
     }
   }
-	// TODO 処理が重いようならQueueを使うなりして削除のコストを下げるべし
-	garbageCollection(now){
-		if(now - this.timer < 1.0){
-			return;
-		}
-		for(let i = 0; i < this.instance.length; i++){
-			for(let j = 0; j < this.instance[i].length; j++){
-				if(this.instance[i][j].lifetime < now - this.instance[i][j].start){
-					this.instance[i].splice(0,j);
-				}
-			}
-		}
-	}
 }
 
 class Witch{
@@ -115,8 +103,8 @@ class Witch{
 			let bullets2 = [];
       for(let i = 0; i < num; i++){
         const theta = 2.0 * Math.PI / num * i + this.thetaOfs;
-        const b = setBullet(now,[this.x+r*Math.sin(theta),this.y-r*aspect*Math.cos(theta),theta],15.0);
-				const b2 = setBullet(now,[this.x+r*Math.sin(theta),this.y-r*aspect*Math.cos(theta),theta],15.0);
+        const b = setBullet(now,[this.x+r*Math.sin(theta),this.y-r*aspect*Math.cos(theta),theta]);
+				const b2 = setBullet(now,[this.x+r*Math.sin(theta),this.y-r*aspect*Math.cos(theta),theta]);
         bullets.push(b);
 				bullets2.push(b2);
       }
@@ -134,7 +122,7 @@ class Witch{
       const num2 = 23;
       const theta = 2.0 * Math.PI / num2 * this.rotCount;
       this.rotCount = (this.rotCount + 1) % num2;
-      const b = setBullet(now,[this.x+r2*Math.sin(theta),this.y-r2*aspect*Math.cos(theta),theta],10.0);
+      const b = setBullet(now,[this.x+r2*Math.sin(theta),this.y-r2*aspect*Math.cos(theta),theta]);
       globalBullets.instance[0].push(b);
       objData.soundPlayer.playEffect();
     }

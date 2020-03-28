@@ -89,8 +89,8 @@ class SoundPlayer{
   constructor(){
     this.bgm = new Audio("sound/BGM/theme1.mp3");
     this.bgm.addEventListener("ended",function(){
-      this.bgm.currentTime = 0;
-      music.play();
+//      this.bgm.currentTime = 0;
+      this.bgm.play();
     },false);
     this.effect = new Audio("sound/effect/short1.mp3");
   }

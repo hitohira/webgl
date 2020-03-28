@@ -63,39 +63,7 @@ function drawSceneSTG(gl,objData,elasped){
 		enemies[i].draw(gl,modelViewMatrix);
 	}
 }
-/*
-function getBulletCenterInfo(move,instance,elasped){
-	const bullet = instance;
-	const existing_time = elasped - bullet.start;
-	const time = move.time;
 
-	// calculate the central position of a bullet
-	let posBulletCenter = [bullet.x0[0],bullet.x0[1]];
-	let theta = bullet.x0[3];
-	if(existing_time > time[0]){
-		const dt = existing_time > time[1] ? time[1] - time[0] : existing_time - time[0];
-		theta += move.v1[1]*dt + 0.5*move.a1[1]*dt*dt;
-		const r = move.v1[0] + 0.5*move.a1[0]*dt;
-		posBulletCenter[0] +=  r * Math.sin(theta) * dt;
-		posBulletCenter[1] += -r * Math.cos(theta) * dt;
-	}
-	if(existing_time > time[1]){
-		const dt = existing_time > time[2] ? time[2] - time[1] : existing_time - time[1];
-		theta += move.vStopRot * dt;
-	}
-	if(existing_time > time[2]){
-		const dt = existing_time - time[2];
-		theta += move.v2[1]*dt + 0.5*move.a2[1]*dt*dt;
-		const r = move.v2[0] + 0.5*move.a2[0]*dt;
-		posBulletCenter[0] +=  r * Math.sin(theta) * dt;
-		posBulletCenter[1] += -r * Math.cos(theta) * dt;
-	}
-	return {
-		center: posBulletCenter,
-		theta: theta,
-	};
-}
-*/
 function getModifiedPrimitivePos(primitive,theta,modelViewMatrix){
 	let posArray = [];
 	const vnum = primitive.outer.length;
@@ -160,4 +128,5 @@ function isTouched(vnum,posArray,posRelative,radius){
 			return true;
 		}
 	}
+	return false;
 }
